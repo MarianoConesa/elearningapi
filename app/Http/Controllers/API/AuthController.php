@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Image;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,24 +20,34 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        try{
         // Validación de datos
         $request->validate([
-            'name' => 'required|string',
+            'username' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
         ]);
 
         // Crear nuevo usuario
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = User::create((array)$request->except('profilePic'));
+        if ($request->profilePic){
+            $imgId = Image::insertImg($user->username.'profilePic', $request->profilePic);
+            $user->update([
+                'profilePic' => $imgId,
+            ]);
+        }
 
         // Generar token
         $token = User::find($user->id)->createToken('api-token')->plainTextToken;
 
         return response()->json(['message' => 'Usuario registrado correctamente', 'token' => $token]);
+
+        }catch (Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar el perfil',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -46,16 +58,21 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-       // Intento de inicio de sesión
+       try{
+        // Intento de inicio de sesión
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             // Usuario autenticado, generar token
             $user = Auth::user();
             $userModel = User::findOrFail($user->id);
             $token = $userModel->createToken('api-token')->plainTextToken;
-
             return response()->json(['message' => 'Inicio de sesión exitoso', 'token' => $token]);
-        } else {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
+        }
+        } catch (Exception $e) {
+            // Manejar los errores
+            return response()->json([
+                'message' => 'Credenciales Incorrectas',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -71,5 +88,19 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Cierre de sesión exitoso']);
+    }
+
+    public function deleteUser(Request $request)
+    {
+        try{
+            $user = $request->user();
+            User::findOrFail($user->id)->delete();
+            return response()->json(['message' => 'Usuario eliminado correctamente']);
+        }catch (Exception  $e){
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
     }
 }
