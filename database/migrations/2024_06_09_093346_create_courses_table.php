@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->json('video');
             $table->unsignedBigInteger('user_id');
+            $table->json('catArr');
+            $table->boolean('public');
             $table->foreign('user_id')->references('id')->on('users');
             $table->timestamps();
         });
