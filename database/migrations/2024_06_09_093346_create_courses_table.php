@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->json('videoArr');
+            $table->unsignedBigInteger('miniature');
             $table->unsignedBigInteger('user_id');
+            $table->json('catArr');
+            $table->boolean('public');
+            $table->integer('liked');
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('miniature')->references('id')->on('images');
             $table->timestamps();
         });
     }

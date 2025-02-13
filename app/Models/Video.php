@@ -5,16 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Course extends Model
+class Video extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'miniature',
-        'user_id',
-        'catArr',
-        'public',
-        'liked'
+        'course_id', 'file'
     ];
 }

@@ -57,8 +57,13 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request)
-    {
-       try{
+{
+    try {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
         // Intento de inicio de sesión
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             // Usuario autenticado, generar token
@@ -67,14 +72,18 @@ class AuthController extends Controller
             $token = $userModel->createToken('api-token')->plainTextToken;
             return response()->json(['message' => 'Inicio de sesión exitoso', 'token' => $token]);
         }
-        } catch (Exception $e) {
-            // Manejar los errores
-            return response()->json([
-                'message' => 'Credenciales Incorrectas',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+
+        return response()->json([
+            'message' => 'Credenciales incorrectas'
+        ], 401);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => 'Error en el inicio de sesión',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     /**
      * Cierre de sesión de usuarios.
@@ -84,7 +93,6 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Revocar el token del usuario autenticado
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Cierre de sesión exitoso']);
