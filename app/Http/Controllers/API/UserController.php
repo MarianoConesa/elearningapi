@@ -13,12 +13,12 @@ class UserController extends Controller
     public static function getInitialInfo(Request $request){
         try{
             $user = $request->user();
-            $profilePic = !empty($user->profilePic) && ($user->profilePic)->file;
             $retObj = (object)[];
+            $retObj->id = $user->id;
             $retObj->username = $user->username;
             $retObj->name = $user->name;
             $retObj->email = $user->email;
-            $profilePic && $retObj->profilePic = $profilePic;
+            $retObj->profilePic = !empty($user->profilePic) ? Image::where('id', $user->profilePic)->first()->file : null;
             return response()->json(['message' => $retObj]);
         }catch(Exception $e){
             return response()->json([
