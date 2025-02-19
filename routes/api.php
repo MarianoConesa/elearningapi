@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\CourseController;
 use App\Http\Controllers\API\ImageController;
 use App\Http\Controllers\API\UserController;
 
@@ -23,6 +24,10 @@ use App\Http\Controllers\API\UserController;
 
     Route::prefix('images')->group(function () {
         Route::get('initialImages', [ImageController::class, 'getInitialImg']);
+    });
+
+    Route::prefix('courses')->group(function () {
+        Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');
     });
 
     Route::get('getCategories', [CategoryController::class, 'getCategories']);

@@ -31,7 +31,7 @@ class AuthController extends Controller
         // Crear nuevo usuario
         $user = User::create((array)$request->except('profilePic'));
         if ($request->profilePic){
-            $imgId = Image::insertImg($user->username.'profilePic', $request->profilePic);
+            $imgId = Image::insertImg($user->username.'-profilePic', $request->profilePic);
             $user->update([
                 'profilePic' => $imgId,
             ]);

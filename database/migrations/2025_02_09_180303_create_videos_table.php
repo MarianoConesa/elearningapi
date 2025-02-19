@@ -13,9 +13,7 @@ return new class extends Migration
     {
         Schema::create('videos', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('course_id');
             $table->longText('file');
-            $table->foreign('course_id')->references('id')->on('courses');
             $table->timestamps();
         });
     }
