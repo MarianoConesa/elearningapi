@@ -13,28 +13,40 @@ use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
-    static public function createCourse(Request $request){
-        try {
-            $catNames = $request->input('catArr', []);
-            $catIds = Category::whereIn('name', $catNames)->pluck('id')->toArray();
+    static public function createCourse(Request $request)
+{
+    try {
+        $courseObj = $request->all();
+        $catIds = array_map('intval', $request->catArr); //Se están pasando todos los datos como string por FormData y necesitamos un array de int
+        $catArr = self::addParentCategories($catIds);
 
-            $catArr = self::addParentCategories($catIds);
+        $courseObj['user_id'] = Auth::id();
+        $courseObj['catArr'] = json_encode($catArr);
+        $courseObj['isPrivate'] = $request->isPrivate === true ? 1 : 0;
 
-            $reqObj = $request->all();
-            $reqObj['user_id'] = Auth::id();
-            $reqObj['catArr'] = json_encode($catArr); // Guardar solo los IDs
-            $videoId = Video::create(['file' => $reqObj['video']]);
-            $imageId = Image::create(['file' => $reqObj['miniature'], 'name' => 'courseImg']);
-            $reqObj['video_id'] = $videoId->id;
-            $reqObj['miniature'] = $imageId->id;
-
-            $newCourse = Course::create($reqObj);
-
-            return response()->json(['message' => ['Course created', $newCourse->id]]);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+        // Guardar video en storage y guardar la ruta
+        if ($request->hasFile('video')) {
+            $videoPath = $request->file('video')->store('videos', 'public');
+            $video = Video::create(['file' => $videoPath]);
+            $courseObj['video_id'] = $video->id;
         }
+
+        // Guardar imagen en storage y guardar la ruta
+        if ($request->hasFile('miniature')) {
+            $imagePath = $request->file('miniature')->store('miniatures', 'public');
+            $image = Image::create(['file' => $imagePath, 'name' => 'courseImg']);
+            $courseObj['miniature'] = $image->id;
+        }
+
+
+        $newCourse = Course::create($courseObj);
+
+        return response()->json(['message' => ['Course created', $newCourse->id]]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
 
 
     static private function addParentCategories(array $catArr): array {
