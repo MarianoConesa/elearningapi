@@ -16,13 +16,12 @@ return new class extends Migration
             $table->string('title');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('miniature')->nullable();
-            //$table->unsignedBigInteger('video_id');
             $table->json('catArr');
             $table->boolean('isPrivate')->default(false);
             $table->string('password')->nullable();
+            $table->integer('likes')->default(0);
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('miniature')->references('id')->on('images');
-            //$table->foreign('video_id')->references('id')->on('videos');
             $table->timestamps();
         });
     }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class Image extends Model
@@ -23,6 +24,16 @@ static public function getLogo()
     }
 
     return null;
+}
+
+public function course(): HasOne
+{
+    return $this->hasOne(Course::class);
+}
+
+public function userProfile(): HasOne
+{
+    return $this->hasOne(User::class);
 }
 
 }
