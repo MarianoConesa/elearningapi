@@ -29,6 +29,7 @@ use App\Http\Controllers\API\UserController;
     Route::prefix('courses')->group(function () {
         Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');
         Route::get('getAll', [CourseController::class, 'getAllCourses']);
+        Route::post('getById', [CourseController::class, 'getCourseById']);
     });
 
     Route::get('getCategories', [CategoryController::class, 'getCategories']);

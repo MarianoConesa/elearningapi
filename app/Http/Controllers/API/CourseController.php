@@ -11,6 +11,8 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\CourseResource;
+use App\Http\Resources\CourseCollection;
 
 class CourseController extends Controller
 {
@@ -51,38 +53,21 @@ class CourseController extends Controller
     static public function getAllCourses()
     {
         try {
-            $courses = Course::with(['user.image', 'image', 'video'])->get();
-
-            return response()->json([
-                'message' => $courses->map(function ($course) {
-                    return [
-                        'id' => $course->id,
-                        'title' => $course->title,
-                        'user' => [
-                            'id' => $course->user->id,
-                            'name' => $course->user->name,
-                            'username' => $course->user->username ?? null,
-                            'profilePic' => $course->user->image
-                                ? asset('storage/' . $course->user->image->file)
-                                : null,
-                        ],
-                        'miniature' => $course->image
-                            ? asset('storage/' . $course->image->file)
-                            : null,
-                        // 'video' => $course->video
-                        //     ? asset('storage/' . $course->video->file)
-                        //     : null,
-                        'categories' => json_decode($course->catArr, true),
-                        'isPrivate' => (bool) $course->isPrivate,
-                        'created_at' => $course->created_at->format('Y-m-d H:i:s'),
-                        'likes' => $course->likes,
-                    ];
-                }),
-            ]);
+            return response()->json(['message' => new CourseCollection(Course::all())]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public static function getCourseById(Request $request)
+    {
+        try {
+            return response()->json(['message' => new CourseResource(Course::findOrFail($request->id))]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
 
 
 
