@@ -30,6 +30,10 @@ use App\Http\Controllers\API\UserController;
         Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');
         Route::get('getAll', [CourseController::class, 'getAllCourses']);
         Route::post('getById', [CourseController::class, 'getCourseById']);
+        Route::get('getOwned', [CourseController::class, 'getOwnedCourses'])->middleware('auth:sanctum');
+        Route::get('getFollowed', [CourseController::class, 'getFollowedCourses'])->middleware('auth:sanctum');
+        Route::get('getLiked', [CourseController::class, 'getLikedCourses'])->middleware('auth:sanctum');
+        Route::get('getEnded', [CourseController::class, 'getEndedCourses'])->middleware('auth:sanctum');
     });
 
     Route::get('getCategories', [CategoryController::class, 'getCategories']);

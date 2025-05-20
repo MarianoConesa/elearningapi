@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CourseResource;
 use App\Http\Resources\CourseCollection;
+use App\Models\User;
 
 class CourseController extends Controller
 {
@@ -68,7 +69,64 @@ class CourseController extends Controller
         }
     }
 
+    public static function getOwnedCourses(Request $request) {
+        try {
+            $userId = Auth::id();
+            $ownedCourses = Course::where('user_id', $userId)->get();
 
+            return response()->json(['message' => new CourseCollection($ownedCourses)]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // public static function getFollowedCourses(Request $request) {
+    //     try {
+    //         $userId = Auth::id();
+    //         $user = User::findOrFail($userId);
+
+    //         $followedIds = $user->followed ?? [];
+
+    //         $followedCourses = Course::whereIn('id', $followedIds)->get();
+
+    //         return response()->json(['message' => new CourseCollection($followedCourses)]);
+    //     } catch (Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    public static function getFollowedCourses(Request $request)
+    {
+        return self::getCoursesByUserField('followed');
+    }
+
+    public static function getLikedCourses(Request $request)
+    {
+        return self::getCoursesByUserField('liked');
+    }
+
+    public static function getEndedCourses(Request $request)
+    {
+        return self::getCoursesByUserField('ended');
+    }
+
+    static private function getCoursesByUserField(string $field)
+    {
+    try {
+        $userId = Auth::id();
+        $user = User::findOrFail($userId);
+
+        $courseIds = json_decode($user->{$field}, true) ?? [];
+
+        $courses = count($courseIds) > 0
+            ? Course::whereIn('id', $courseIds)->get()
+            : collect();
+
+        return response()->json(['message' => new CourseCollection($courses)]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
 
 
     static private function addParentCategories(array $catArr): array {
