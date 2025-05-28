@@ -20,6 +20,7 @@ use App\Http\Controllers\API\UserController;
 
     Route::prefix('user')->group(function () {
         Route::get('/initialInfo', [UserController::class, 'getInitialInfo'])->middleware('auth:sanctum');
+        Route::post('followCourse', [UserController::class, 'followCourse'])->middleware('auth:sanctum');
     });
 
     Route::prefix('images')->group(function () {

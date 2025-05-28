@@ -21,19 +21,12 @@ class CourseController extends Controller
     {
         try {
             $courseObj = $request->all();
-            $catIds = array_map('intval', $request->catArr); //Se están pasando todos los datos como string por FormData y necesitamos un array de int
+            $catIds = array_map('intval', $request->catArr);
             $catArr = self::addParentCategories($catIds);
 
             $courseObj['user_id'] = Auth::id();
             $courseObj['catArr'] = json_encode($catArr);
             $courseObj['isPrivate'] = $request->isPrivate === true ? 1 : 0;
-
-            // Guardar video en storage y guardar la ruta
-            if ($request->hasFile('video')) {
-                $videoPath = $request->file('video')->store('videos', 'public');
-                $video = Video::create(['file' => $videoPath]);
-                $courseObj['video_id'] = $video->id;
-            }
 
             // Guardar imagen en storage y guardar la ruta
             if ($request->hasFile('miniature')) {
@@ -42,8 +35,27 @@ class CourseController extends Controller
                 $courseObj['miniature'] = $image->id;
             }
 
-
+            // Primero creamos el curso
             $newCourse = Course::create($courseObj);
+
+            // Luego creamos el video y lo asociamos al curso
+            if ($request->hasFile('video')) {
+                $videos = $request->file('video');
+                $indices = $request->input('indice', []);  // Obtiene el array de índices, si no existe, vacío
+
+                foreach ($videos as $key => $file) {
+                    $videoPath = $file->store('videos', 'public');
+
+                    $video = new Video([
+                        'file' => $videoPath,
+                        'title' => isset($indices[$key]) ? $indices[$key] : null
+                    ]);
+                    $video->course()->associate($newCourse);
+                    $video->save();
+                }
+            }
+
+
 
             return response()->json(['message' => ['Course created', $newCourse->id]]);
         } catch (Exception $e) {
@@ -80,21 +92,6 @@ class CourseController extends Controller
         }
     }
 
-    // public static function getFollowedCourses(Request $request) {
-    //     try {
-    //         $userId = Auth::id();
-    //         $user = User::findOrFail($userId);
-
-    //         $followedIds = $user->followed ?? [];
-
-    //         $followedCourses = Course::whereIn('id', $followedIds)->get();
-
-    //         return response()->json(['message' => new CourseCollection($followedCourses)]);
-    //     } catch (Exception $e) {
-    //         return response()->json(['error' => $e->getMessage()], 500);
-    //     }
-    // }
-
     public static function getFollowedCourses(Request $request)
     {
         return self::getCoursesByUserField('followed');
@@ -112,21 +109,21 @@ class CourseController extends Controller
 
     static private function getCoursesByUserField(string $field)
     {
-    try {
-        $userId = Auth::id();
-        $user = User::findOrFail($userId);
+        try {
+            $userId = Auth::id();
+            $user = User::findOrFail($userId);
 
-        $courseIds = json_decode($user->{$field}, true) ?? [];
+            $courseIds = json_decode($user->{$field}, true) ?? [];
 
-        $courses = count($courseIds) > 0
-            ? Course::whereIn('id', $courseIds)->get()
-            : collect();
+            $courses = count($courseIds) > 0
+                ? Course::whereIn('id', $courseIds)->get()
+                : collect();
 
-        return response()->json(['message' => new CourseCollection($courses)]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['message' => new CourseCollection($courses)]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-}
 
 
     static private function addParentCategories(array $catArr): array {

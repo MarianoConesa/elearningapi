@@ -7,7 +7,9 @@ use App\Models\Image;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Exists;
 
 class UserController extends Controller
 {
@@ -82,4 +84,30 @@ public static function updateUser($id, $updated)
     }
 }
 
+    public static function followCourse(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $courseId = $request->input('id');
+
+            // Asegurarse de que 'followed' sea un array, o inicializarlo como tal
+            $followed = empty($user->followed) ? [] : json_decode($user->followed);
+
+            // Evitar duplicados
+            if (!in_array(intval($courseId), $followed)) {
+                $followed[] = $courseId;
+            }
+
+            // Actualizar el campo seguido
+            $user->followed = $followed;
+            $user->save();
+
+            return response()->json([
+                'message' => 'Curso seguido correctamente.',
+                'followed' => $user->followed
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

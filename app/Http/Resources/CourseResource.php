@@ -23,9 +23,16 @@ class CourseResource extends JsonResource
             'miniature' => $this->image
                 ? asset('storage/' . $this->image->file)
                 : null,
-            'video' => $this->video
-                ? asset('storage/' . $this->video->file)
-                : null,
+
+            // Aquí devolvemos todos los videos asociados
+            'videos' => $this->videos->map(function ($video) {
+                return [
+                    'id' => $video->id,
+                    'file' => asset('storage/' . $video->file),
+                    'title' => $video->title,
+                ];
+            }),
+
             'categories' => json_decode($this->catArr, true),
             'isPrivate' => (bool) $this->isPrivate,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),

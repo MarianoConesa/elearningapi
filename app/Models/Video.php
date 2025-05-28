@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Video extends Model
@@ -11,12 +12,14 @@ class Video extends Model
     use HasFactory;
 
     protected $fillable = [
-        'file'
+        'file',
+        'course_id',
+        'title',
     ];
 
-    public function course(): HasOne
+    public function course(): BelongsTo
     {
-        return $this->hasOne(Course::class);
+        return $this->belongsTo(Course::class);
     }
 
 }
