@@ -26,16 +26,18 @@ class AuthController extends Controller
             'username' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
+            'profilePic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         // Crear nuevo usuario
         $user = User::create((array)$request->except('profilePic'));
-        if ($request->profilePic){
-            $imgId = Image::insertImg($user->username.'profilePic', $request->profilePic);
-            $user->update([
-                'profilePic' => $imgId,
-            ]);
+        if ($request->hasFile('profilePic')) {
+            $imagePath = $request->file('profilePic')->store('profile_pics', 'public');
+            $newImg = Image::create(['name' => $request->username . 'profile_pic',
+                           'file' => $imagePath,]);
+            $user->update(['profilePic' => $newImg->id]);
         }
+
 
         // Generar token
         $token = User::find($user->id)->createToken('api-token')->plainTextToken;

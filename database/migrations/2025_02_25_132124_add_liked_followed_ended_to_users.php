@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('videos', function (Blueprint $table) {
-            $table->id();
-            $table->string('file');
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->json('liked')->nullable();
+            $table->json('followed')->nullable();
+            $table->json('ended')->nullable();
         });
     }
 
@@ -23,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('videos');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['liked', 'followed', 'ended']);
+        });
     }
 };

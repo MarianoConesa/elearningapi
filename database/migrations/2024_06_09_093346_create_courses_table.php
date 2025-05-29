@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->unsignedBigInteger('miniature');
+            $table->string('title');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('miniature')->nullable();
             $table->json('catArr');
-            $table->boolean('public');
-            $table->integer('liked');
+            $table->boolean('isPrivate')->default(false);
+            $table->string('password')->nullable();
+            $table->integer('likes')->default(0);
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('miniature')->references('id')->on('images');
             $table->timestamps();

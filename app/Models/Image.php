@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Image extends Model
 {
@@ -13,17 +15,25 @@ class Image extends Model
         'name', 'file','description'
     ];
 
-    static public function getLogo(){
-        $logo = self::where('name', 'logo white')->first();
-        return $logo;
+static public function getLogo()
+{
+    $logo = self::where('name', 'logo white')->first();
+
+    if ($logo && Storage::exists($logo->file)) {
+        return Storage::get($logo->file);
     }
 
-    static public function insertImg($name = 'image', $file, $description= ''){
-        $newImg = self::create([
-                    'name' => $name,
-                    'file' => $file,
-                    'description' => $description
-        ]);
-        return $newImg->id;
-    }
+    return null;
+}
+
+public function course(): HasOne
+{
+    return $this->hasOne(Course::class);
+}
+
+public function userProfile(): HasOne
+{
+    return $this->hasOne(User::class);
+}
+
 }
