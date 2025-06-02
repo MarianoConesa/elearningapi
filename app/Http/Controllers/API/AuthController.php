@@ -38,11 +38,15 @@ class AuthController extends Controller
             $user->update(['profilePic' => $newImg->id]);
         }
 
-
+        $user->sendEmailVerificationNotification();
         // Generar token
-        $token = User::find($user->id)->createToken('api-token')->plainTextToken;
+        //$token = User::find($user->id)->createToken('api-token')->plainTextToken;
 
-        return response()->json(['message' => 'Usuario registrado correctamente', 'token' => $token]);
+        //return response()->json(['message' => 'Usuario registrado correctamente', 'token' => $token]);
+
+        return response()->json([
+            'message' => 'Registro exitoso. Revisa tu correo para verificar tu cuenta.'
+        ]);
 
         }catch (Exception $e) {
             return response()->json([
@@ -68,16 +72,22 @@ class AuthController extends Controller
 
         // Intento de inicio de sesión
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            // Usuario autenticado, generar token
             $user = Auth::user();
-            $userModel = User::findOrFail($user->id);
-            $token = $userModel->createToken('api-token')->plainTextToken;
-            return response()->json(['message' => 'Inicio de sesión exitoso', 'token' => $token]);
-        }
 
-        return response()->json([
-            'message' => 'Credenciales incorrectas'
-        ], 401);
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json([
+                    'message' => 'Debes verificar tu correo antes de iniciar sesión.'
+                ], 403);
+            }
+
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Inicio de sesión exitoso',
+                'token' => $token,
+                'user' => $user
+            ]);
+        }
 
     } catch (Exception $e) {
         return response()->json([
