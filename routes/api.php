@@ -9,6 +9,10 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CourseController;
 use App\Http\Controllers\API\ImageController;
 use App\Http\Controllers\API\UserController;
+use App\Models\User;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Laravel\Socialite\Facades\Socialite;
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', function (Request $request) {
@@ -17,6 +21,22 @@ use App\Http\Controllers\API\UserController;
             return $user;
         });
     });
+
+    // Route::post('/email/resend', function (Request $request) {
+    //     $user = User::where('email', $request->email)->first();
+
+    //     if (!$user) {
+    //         return response()->json(['message' => 'Usuario no encontrado'], 404);
+    //     }
+
+    //     if ($user->hasVerifiedEmail()) {
+    //         return response()->json(['message' => 'Este email ya está verificado']);
+    //     }
+
+    //     $user->sendEmailVerificationNotification();
+
+    //     return response()->json(['message' => 'Correo de verificación reenviado']);
+    // });
 
     Route::prefix('user')->group(function () {
         Route::get('/initialInfo', [UserController::class, 'getInitialInfo'])->middleware('auth:sanctum');
