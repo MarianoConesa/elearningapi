@@ -41,6 +41,8 @@ use Laravel\Socialite\Facades\Socialite;
     Route::prefix('user')->group(function () {
         Route::get('/initialInfo', [UserController::class, 'getInitialInfo'])->middleware('auth:sanctum');
         Route::post('followCourse', [UserController::class, 'followCourse'])->middleware('auth:sanctum');
+        Route::post('endCourse', [UserController::class, 'endCourse'])->middleware('auth:sanctum');
+        Route::post('unfollowCourse', [UserController::class, 'unfollowCourse'])->middleware('auth:sanctum');
     });
 
     Route::prefix('images')->group(function () {

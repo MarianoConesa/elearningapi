@@ -55,6 +55,9 @@ class CourseController extends Controller
                 }
             }
 
+            //Crea las interacciones en bbdd
+            $newCourse->interaction()->create();
+
 
 
             return response()->json(['message' => ['Course created', $newCourse->id]]);

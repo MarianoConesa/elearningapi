@@ -26,16 +26,6 @@ class Course extends Model
         'catArr'
     ];
 
-    public function incrementLikes()
-    {
-        $this->increment('likes');
-    }
-
-    public function decrementLikes()
-    {
-        $this->decrement('likes');
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -49,5 +39,10 @@ class Course extends Model
     public function image(): BelongsTo //Image y no miniature porque al tratar con una tabla miniature la detectaría en vez de al método
     {
         return $this->belongsTo(Image::class, 'miniature', 'id');
+    }
+
+    public function interaction()
+    {
+        return $this->hasOne(CourseInteraction::class);
     }
 }
