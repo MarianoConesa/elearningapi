@@ -12,6 +12,7 @@ use App\Http\Controllers\API\UserController;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Laravel\Socialite\Facades\Socialite;
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', function (Request $request) {
@@ -20,25 +21,6 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
             return $user;
         });
     });
-
-
-    Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
-        $user = User::findOrFail($id);
-
-        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Hash inválido.'], 403);
-        }
-
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'El correo ya estaba verificado.']);
-        }
-
-        $user->markEmailAsVerified();
-        event(new Verified($user));
-
-        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
-        return redirect()->away("{$frontendUrl}/emailVerified");
-    })->name('verification.verify');
 
     // Route::post('/email/resend', function (Request $request) {
     //     $user = User::where('email', $request->email)->first();
