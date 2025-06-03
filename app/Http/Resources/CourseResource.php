@@ -28,7 +28,7 @@ class CourseResource extends JsonResource
             'videos' => $this->videos->map(function ($video) {
                 return [
                     'id' => $video->id,
-                    'file' => asset('storage/' . $video->file),
+                    'file' => route('api.videostream', ['filename' => basename($video->file)]),
                     'title' => $video->title,
                 ];
             }),
