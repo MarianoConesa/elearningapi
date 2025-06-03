@@ -9,6 +9,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CourseController;
 use App\Http\Controllers\API\ImageController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\VideoController;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -58,6 +59,8 @@ use Laravel\Socialite\Facades\Socialite;
         Route::get('getLiked', [CourseController::class, 'getLikedCourses'])->middleware('auth:sanctum');
         Route::get('getEnded', [CourseController::class, 'getEndedCourses'])->middleware('auth:sanctum');
     });
+
+    Route::get('/videos/stream/{filename}', [VideoController::class, 'stream'])->name('api.videostream');
 
     Route::get('getCategories', [CategoryController::class, 'getCategories']);
 
