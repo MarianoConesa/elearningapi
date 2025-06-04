@@ -15,16 +15,16 @@ class Image extends Model
         'name', 'file','description'
     ];
 
-static public function getLogo()
-{
-    $logo = self::where('name', 'logo white')->first();
+    static public function getLogo()
+    {
+        $logo = self::where('name', 'logo white')->first();
 
-    if ($logo && Storage::exists($logo->file)) {
-        return Storage::get($logo->file);
+        if ($logo && Storage::disk('public')->exists($logo->file)) {
+            return Storage::disk('public')->get($logo->file);
+        }
+
+        return null;
     }
-
-    return null;
-}
 
 public function course(): HasOne
 {

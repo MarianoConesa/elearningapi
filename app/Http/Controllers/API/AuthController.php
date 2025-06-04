@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetMail;
 use App\Models\Image;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -123,4 +126,31 @@ class AuthController extends Controller
         }
 
     }
+
+    public function forgotPassword(Request $request)
+{
+    try{
+        $request->validate([
+        'email' => 'required|email|exists:users,email',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    // Generar nueva contraseña aleatoria
+    $newPassword = Str::random(10);
+
+    // Actualizar en la base de datos
+    $user->password = Hash::make($newPassword);
+    $user->save();
+
+    // Enviar correo
+    Mail::to($user->email)->send(new PasswordResetMail($newPassword));
+
+    return response()->json(['message' => 'Se ha enviado un correo con la nueva contraseña.']);
+    }catch (Exception  $e){
+        return response()->json([
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
 }
