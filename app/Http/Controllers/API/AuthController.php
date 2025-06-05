@@ -29,7 +29,7 @@ class AuthController extends Controller
             'username' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6',
-            'profilePic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'profilePic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5048'
         ]);
 
         // Crear nuevo usuario

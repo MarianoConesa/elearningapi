@@ -16,34 +16,14 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Laravel\Socialite\Facades\Socialite;
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/user', function (Request $request) {
-            $user = $request->user();
-            $user->fullName = $user->nombre . ' ' . $user->apellidos;
-            return $user;
+        Route::prefix('user')->group(function () {
+            Route::get('/initialInfo', [UserController::class, 'getInitialInfo']);
+            Route::post('followCourse', [UserController::class, 'followCourse']);
+            Route::post('endCourse', [UserController::class, 'endCourse']);
+            Route::post('unfollowCourse', [UserController::class, 'unfollowCourse']);
+            Route::post('updateUser', [UserController::class, 'updateUser']);
+            Route::post('updatePassword', [UserController::class, 'updatePassword']);
         });
-    });
-
-    // Route::post('/email/resend', function (Request $request) {
-    //     $user = User::where('email', $request->email)->first();
-
-    //     if (!$user) {
-    //         return response()->json(['message' => 'Usuario no encontrado'], 404);
-    //     }
-
-    //     if ($user->hasVerifiedEmail()) {
-    //         return response()->json(['message' => 'Este email ya está verificado']);
-    //     }
-
-    //     $user->sendEmailVerificationNotification();
-
-    //     return response()->json(['message' => 'Correo de verificación reenviado']);
-    // });
-
-    Route::prefix('user')->group(function () {
-        Route::get('/initialInfo', [UserController::class, 'getInitialInfo'])->middleware('auth:sanctum');
-        Route::post('followCourse', [UserController::class, 'followCourse'])->middleware('auth:sanctum');
-        Route::post('endCourse', [UserController::class, 'endCourse'])->middleware('auth:sanctum');
-        Route::post('unfollowCourse', [UserController::class, 'unfollowCourse'])->middleware('auth:sanctum');
     });
 
     Route::prefix('images')->group(function () {
