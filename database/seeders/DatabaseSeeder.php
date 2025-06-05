@@ -40,11 +40,11 @@ class DatabaseSeeder extends Seeder
 
     private $images = [
         ['name' => 'logo white',
-         'file' => 'public/assets/logos/logoIconWhite.svg']
+         'file' => 'assets/logos/logoIconWhite.svg']
         ,['name' => 'logo Black',
-          'file' => 'public/assets/logos/logoIcon.svg']
+          'file' => 'assets/logos/logoIcon.svg']
         ,['name' => 'logo Contrast',
-        'file' => 'public/assets/logos/logoIconContrast.svg']
+        'file' => 'assets/logos/logoIconContrast.svg']
     ];
 
 }

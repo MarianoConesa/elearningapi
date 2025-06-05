@@ -9,6 +9,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Exists;
 
@@ -51,36 +52,85 @@ class UserController extends Controller
 
 
 
-public static function updateUser($id, $updated)
-{
-    try {
-        $user = User::findOrFail($id);
+    public static function updateUser(Request $request)
+    {
+        try {
+            $user = User::findOrFail($request->input('id'));
 
-        if (isset($updated['profilePic']) && $updated['profilePic'] instanceof \Illuminate\Http\UploadedFile) {
-            // Obtener la imagen anterior y eliminarla si existe
-            if (!empty($user->profilePic)) {
-                $oldImage = Image::find($user->profilePic);
-                if ($oldImage) {
-                    Storage::disk('public')->delete($oldImage->file);
-                    $oldImage->delete();
+            $updated = [];
+
+            if ($request->hasFile('profilePic')) {
+                // Subir nueva imagen
+                $imagePath = $request->file('profilePic')->store('profile_pics', 'public');
+
+                $image = Image::create([
+                    'file' => $imagePath,
+                    'name' => $user->username . '-profilePic',
+                ]);
+
+                // Guardar nueva imagen en el usuario primero (esto evita la violación de la FK)
+                $oldImageId = $user->profilePic;
+                $user->profilePic = $image->id;
+                $user->save();
+
+                // Ahora eliminar la imagen anterior (ya no está referenciada)
+                if (!empty($oldImageId)) {
+                    $oldImage = Image::find($oldImageId);
+                    if ($oldImage) {
+                        Storage::disk('public')->delete($oldImage->file);
+                        $oldImage->delete();
+                    }
                 }
             }
 
-            // Guardar la nueva imagen en storage
-            $imagePath = $updated['profilePic']->store('profile_pics', 'public');
+            // Actualizar otros campos si vienen en el request
+            if ($request->filled('username')) {
+                $user->username = $request->input('username');
+            }
 
-            // Crear un nuevo registro en la tabla `images`
-            $image = Image::create([
-                'file' => $imagePath,
-                'name' => $user->username . '-profilePic',
-            ]);
+            if ($request->filled('name')) {
+                $user->name = $request->input('name');
+            }
 
-            // Asignar el nuevo ID de la imagen al usuario
-            $updated['profilePic'] = $image->id;
+            $user->save();
+
+            return response()->json(['message' => 'Usuario actualizado correctamente']);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar el usuario',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public static function updatePassword(Request $request)
+{
+    try {
+        // Validar datos
+        $request->validate([
+            'id' => 'required|integer|exists:users,id',
+            'currentPassword' => 'required|string',
+            'newPassword' => 'required|string|min:6|confirmed', // password_confirmation requerido
+        ]);
+
+        // Buscar usuario
+        $user = User::findOrFail($request->id);
+
+        // Comprobar que currentPassword es correcto
+        if (!Hash::check($request->currentPassword, $user->password)) {
+            return response()->json([
+                'message' => 'La contraseña antigua es incorrecta',
+            ], 400);
         }
 
-        $user->update($updated);
-        return $user->id;
+        // Actualizar contraseña con hash
+        $user->password = Hash::make($request->newPassword);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Contraseña actualizada correctamente',
+        ], 200);
+
     } catch (Exception $e) {
         return response()->json([
             'message' => 'Error al actualizar el usuario',
@@ -88,6 +138,9 @@ public static function updateUser($id, $updated)
         ], 500);
     }
 }
+
+
+
 
     public static function followCourse(Request $request)
     {
