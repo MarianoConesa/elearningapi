@@ -20,6 +20,7 @@ class CourseResource extends JsonResource
                     ? asset('storage/' . $this->user->image->file)
                     : null,
             ],
+            'description' => $this->description,
             'miniature' => $this->image
                 ? asset('storage/' . $this->image->file)
                 : null,

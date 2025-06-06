@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\CourseController;
 use App\Http\Controllers\API\ImageController;
 use App\Http\Controllers\API\UserController;
@@ -43,6 +44,14 @@ use Laravel\Socialite\Facades\Socialite;
     Route::get('/videos/stream/{filename}', [VideoController::class, 'stream'])->name('api.videostream');
 
     Route::get('getCategories', [CategoryController::class, 'getCategories']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/createComment', [CommentController::class, 'createComment']);
+        Route::post('/updateComment/{id}', [CommentController::class, 'updateComment']);
+        Route::delete('/removeComment/{id}', [CommentController::class, 'removeComment']);
+    });
+
+    Route::get('/getComments/{courseId}', [CommentController::class, 'getComments']);
 
 
     Route::post('login', [AuthController::class, 'login']);

@@ -22,6 +22,7 @@ class CourseCollection extends ResourceCollection
                             ? asset('storage/' . $course->user->image->file)
                             : null,
                     ],
+                    'description' => $course->description,
                     'miniature' => $course->image
                         ? asset('storage/' . $course->image->file)
                         : null,

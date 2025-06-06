@@ -29,10 +29,7 @@ class UserController extends Controller
         $image = Image::find($user->profilePic);
 
         if ($image && Storage::disk('public')->exists($image->file)) {
-            $fileContent = Storage::disk('public')->get($image->file);
-            $mimeType = Storage::disk('public')->mimeType($image->file);
-            $base64Image = 'data:' . $mimeType . ';base64,' . base64_encode($fileContent);
-            $retObj->profilePic = $base64Image;
+            $retObj->profilePic = asset('storage/' . $image->file);
         } else {
             $retObj->profilePic = null;
         }

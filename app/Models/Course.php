@@ -45,4 +45,9 @@ class Course extends Model
     {
         return $this->hasOne(CourseInteraction::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->with('user');
+    }
 }
