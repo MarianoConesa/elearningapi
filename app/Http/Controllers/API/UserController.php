@@ -47,6 +47,27 @@ class UserController extends Controller
     }
 }
 
+    public static function getForeignUserInfo($id)
+    {
+        try {
+            $user = User::select('id', 'name', 'username', 'email', 'profilePic')->findOrFail($id);
+            $image = Image::find($user->profilePic);
+            if ($image && $image->file) {
+                $user->profilePic = asset('storage/' . $image->file);
+            }else{
+                $user->profilePic = null;
+            }
+
+            return response()->json(['message' => $user]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'No se pudo recoger la informacion de este usuario',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+    }
+
 
 
     public static function updateUser(Request $request)

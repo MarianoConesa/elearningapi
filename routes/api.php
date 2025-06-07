@@ -26,6 +26,7 @@ use Laravel\Socialite\Facades\Socialite;
             Route::post('updatePassword', [UserController::class, 'updatePassword']);
         });
     });
+    Route::get('user/getUserInfo/{id}', [UserController::class, 'getForeignUserInfo']);
 
     Route::prefix('images')->group(function () {
         Route::get('initialImages', [ImageController::class, 'getInitialImg']);
@@ -39,6 +40,8 @@ use Laravel\Socialite\Facades\Socialite;
         Route::get('getFollowed', [CourseController::class, 'getFollowedCourses'])->middleware('auth:sanctum');
         Route::get('getLiked', [CourseController::class, 'getLikedCourses'])->middleware('auth:sanctum');
         Route::get('getEnded', [CourseController::class, 'getEndedCourses'])->middleware('auth:sanctum');
+        Route::get('getByUserId/{id}', [CourseController::class, 'getCoursesByUserId']);
+        Route::post('search', [CourseController::class, 'searchCourses']);
     });
 
     Route::get('/videos/stream/{filename}', [VideoController::class, 'stream'])->name('api.videostream');

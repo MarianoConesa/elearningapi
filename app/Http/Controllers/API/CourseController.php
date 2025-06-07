@@ -35,13 +35,11 @@ class CourseController extends Controller
                 $courseObj['miniature'] = $image->id;
             }
 
-            // Primero creamos el curso
             $newCourse = Course::create($courseObj);
 
-            // Luego creamos el video y lo asociamos al curso
             if ($request->hasFile('video')) {
                 $videos = $request->file('video');
-                $indices = $request->input('indice', []);  // Obtiene el array de índices, si no existe, vacío
+                $indices = $request->input('indice', []);
 
                 foreach ($videos as $key => $file) {
                     $videoPath = $file->store('videos', 'public');
@@ -90,6 +88,34 @@ class CourseController extends Controller
             $ownedCourses = Course::where('user_id', $userId)->get();
 
             return response()->json(['message' => new CourseCollection($ownedCourses)]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public static function getCoursesByUserId($id)
+    {
+        try{
+            $courses = Course::where('user_id', $id)->get();
+            return response()->json(['message' => new CourseCollection($courses)]);
+        }catch (Exception $e){
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
+    public static function searchCourses(Request $request)
+    {
+        try {
+            $coursesByTitle = Course::where('title', 'like', '%' . $request[0] . '%');
+
+            $userIds = User::where('username', 'like', '%' . $request[0] . '%')->pluck('id');
+
+            $coursesByUser = Course::whereIn('user_id', $userIds);
+
+            $courses = $coursesByTitle->union($coursesByUser)->get()->unique('id');
+
+            return response()->json(['message' => new CourseCollection($courses)]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
