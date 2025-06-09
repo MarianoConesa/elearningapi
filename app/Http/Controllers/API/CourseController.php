@@ -35,13 +35,11 @@ class CourseController extends Controller
                 $courseObj['miniature'] = $image->id;
             }
 
-            // Primero creamos el curso
             $newCourse = Course::create($courseObj);
 
-            // Luego creamos el video y lo asociamos al curso
             if ($request->hasFile('video')) {
                 $videos = $request->file('video');
-                $indices = $request->input('indice', []);  // Obtiene el array de índices, si no existe, vacío
+                $indices = $request->input('indice', []);
 
                 foreach ($videos as $key => $file) {
                     $videoPath = $file->store('videos', 'public');
@@ -65,6 +63,77 @@ class CourseController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    static public function updateCourse(Request $request, $id)
+{
+    try {
+        $course = Course::findOrFail($id);
+
+        // Verificar que el usuario autenticado sea el propietario
+        if (Auth::id() !== $course->user_id) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        $catIds = array_map('intval', $request->catArr);
+        $catArr = self::addParentCategories($catIds);
+
+        $course->title = $request->title;
+        $course->description = $request->description;
+        $course->catArr = json_encode($catArr);
+        $course->isPrivate = $request->isPrivate === true ? 1 : 0;
+        $course->password = $request->password ?? null;
+
+        // Actualizar miniatura si se ha enviado una nueva
+        if ($request->hasFile('miniature')) {
+            $imagePath = $request->file('miniature')->store('miniatures', 'public');
+            $image = Image::create(['file' => $imagePath, 'name' => 'courseImg']);
+            $course->miniature = $image->id;
+        }
+
+        $course->save();
+
+        // Procesar oldVideos (actualizar índices y eliminar faltantes)
+        $oldVideos = collect($request->input('old_videos', []))
+            ->map(fn($v) => json_decode($v, true))
+            ->filter(fn($v) => isset($v['id'])); // asegúrate de que haya ID
+
+        $oldVideoIds = $oldVideos->pluck('id')->toArray();
+
+        // Actualizar los títulos de los videos existentes
+        foreach ($course->videos as $video) {
+            if (in_array($video->id, $oldVideoIds)) {
+                $newData = $oldVideos->firstWhere('id', $video->id);
+                $video->title = $newData['title'];
+                $video->save();
+            } else {
+                // Si el video no está en oldVideos, eliminarlo
+                Storage::disk('public')->delete($video->file);
+                $video->delete();
+            }
+        }
+
+        // Agregar nuevos videos si vienen
+        if ($request->hasFile('video')) {
+            $videos = $request->file('video');
+            $indices = $request->input('indice', []);
+
+            foreach ($videos as $key => $file) {
+                $videoPath = $file->store('videos', 'public');
+                $video = new Video([
+                    'file' => $videoPath,
+                    'title' => isset($indices[$key]) ? $indices[$key] : null
+                ]);
+                $video->course()->associate($course);
+                $video->save();
+            }
+        }
+
+        return response()->json(['message' => ['Course updated', $course->id]]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
 
     static public function getAllCourses()
     {
@@ -90,6 +159,34 @@ class CourseController extends Controller
             $ownedCourses = Course::where('user_id', $userId)->get();
 
             return response()->json(['message' => new CourseCollection($ownedCourses)]);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public static function getCoursesByUserId($id)
+    {
+        try{
+            $courses = Course::where('user_id', $id)->get();
+            return response()->json(['message' => new CourseCollection($courses)]);
+        }catch (Exception $e){
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
+    public static function searchCourses(Request $request)
+    {
+        try {
+            $coursesByTitle = Course::where('title', 'like', '%' . $request[0] . '%');
+
+            $userIds = User::where('username', 'like', '%' . $request[0] . '%')->pluck('id');
+
+            $coursesByUser = Course::whereIn('user_id', $userIds);
+
+            $courses = $coursesByTitle->union($coursesByUser)->get()->unique('id');
+
+            return response()->json(['message' => new CourseCollection($courses)]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -16,10 +16,10 @@ class Course extends Model
         'title',
         'user_id',
         'miniature',
+        'description',
         'video_id',
         'catArr',
         'isPrivate',
-        'likes'
     ];
 
     protected $casts = [
@@ -44,5 +44,10 @@ class Course extends Model
     public function interaction()
     {
         return $this->hasOne(CourseInteraction::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->with('user');
     }
 }

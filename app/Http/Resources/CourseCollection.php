@@ -22,13 +22,13 @@ class CourseCollection extends ResourceCollection
                             ? asset('storage/' . $course->user->image->file)
                             : null,
                     ],
+                    'description' => $course->description,
                     'miniature' => $course->image
                         ? asset('storage/' . $course->image->file)
                         : null,
                     'categories' => json_decode($course->catArr, true),
                     'isPrivate' => (bool) $course->isPrivate,
                     'created_at' => $course->created_at->format('Y-m-d H:i:s'),
-                    'likes' => $course->likes,
                 ];
             }),
             'total_courses' => $this->collection->count(),

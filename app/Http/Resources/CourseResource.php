@@ -20,11 +20,11 @@ class CourseResource extends JsonResource
                     ? asset('storage/' . $this->user->image->file)
                     : null,
             ],
+            'description' => $this->description,
             'miniature' => $this->image
                 ? asset('storage/' . $this->image->file)
                 : null,
 
-            // Aquí devolvemos todos los videos asociados
             'videos' => $this->videos->map(function ($video) {
                 return [
                     'id' => $video->id,
@@ -36,7 +36,7 @@ class CourseResource extends JsonResource
             'categories' => json_decode($this->catArr, true),
             'isPrivate' => (bool) $this->isPrivate,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
-            'likes' => $this->likes,
+            'likes' => $this->interaction?->likes_count ?? 0,
         ];
     }
 }
