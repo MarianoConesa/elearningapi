@@ -40,14 +40,18 @@ class VerifyEmailCustom extends Notification
     $url = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())]
+        [
+            'id' => $notifiable->getKey(),
+            'hash' => sha1($notifiable->getEmailForVerification()),
+        ]
     );
 
     return (new MailMessage)
         ->subject('Verifica tu correo')
-        ->line('Haz clic en el botón para verificar tu correo:')
-        ->action('Verificar correo', $url)
-        ->line('Gracias por usar nuestra plataforma.');
+        ->view('emails.verify-email', [
+            'url' => $url,
+            'user' => $notifiable,
+        ]);
 }
 
     protected function verificationUrl($notifiable)

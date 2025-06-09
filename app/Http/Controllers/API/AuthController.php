@@ -144,7 +144,7 @@ class AuthController extends Controller
     $user->save();
 
     // Enviar correo
-    Mail::to($user->email)->send(new PasswordResetMail($newPassword));
+    Mail::to($user->email)->send(new PasswordResetMail($newPassword, $user));
 
     return response()->json(['message' => 'Se ha enviado un correo con la nueva contraseña.']);
     }catch (Exception  $e){
