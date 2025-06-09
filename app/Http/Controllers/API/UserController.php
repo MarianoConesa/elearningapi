@@ -34,9 +34,10 @@ class UserController extends Controller
             $retObj->profilePic = null;
         }
 
-        // Añadir los arrays followed y ended
+        // Añadir los arrays followed, ended y liked
         $retObj->followed = json_decode($user->followed ?? '[]');
         $retObj->ended = json_decode($user->ended ?? '[]');
+        $retObj->liked = json_decode($user->liked ?? '[]');
 
         return response()->json(['message' => $retObj]);
     } catch (Exception $e) {
@@ -226,35 +227,85 @@ class UserController extends Controller
     }
 
     public static function unfollowCourse(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $courseId = intval($request->input('id'));
+
+            // Obtener y decodificar los arrays actuales
+            $followed = empty($user->followed) ? [] : json_decode($user->followed);
+            $ended = empty($user->ended) ? [] : json_decode($user->ended);
+
+            // Filtrar el ID del curso de ambos arrays
+            $followed = array_filter($followed, fn($id) => intval($id) !== $courseId);
+            $ended = array_filter($ended, fn($id) => intval($id) !== $courseId);
+
+            // Guardar cambios
+            $user->followed = array_values($followed); // Reindexar para evitar índices rotos
+            $user->ended = array_values($ended);
+            $user->save();
+            CourseInteraction::where('course_id', $courseId)->decrement('follows_count');
+
+            return response()->json([
+                'message' => 'Curso eliminado de tu progreso.',
+                'followed' => $user->followed,
+                'ended' => $user->ended,
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public static function likeCourse(Request $request)
 {
     try {
         $user = $request->user();
         $courseId = intval($request->input('id'));
 
-        // Obtener y decodificar los arrays actuales
-        $followed = empty($user->followed) ? [] : json_decode($user->followed);
-        $ended = empty($user->ended) ? [] : json_decode($user->ended);
+        // Obtener y decodificar el array actual
+        $liked = empty($user->liked) ? [] : json_decode($user->liked);
 
-        // Filtrar el ID del curso de ambos arrays
-        $followed = array_filter($followed, fn($id) => intval($id) !== $courseId);
-        $ended = array_filter($ended, fn($id) => intval($id) !== $courseId);
+        // Agregar a 'liked' si no está
+        if (!in_array($courseId, $liked)) {
+            $liked[] = $courseId;
+            $user->liked = array_values($liked); // Reindexar
+            $user->save();
 
-        // Guardar cambios
-        $user->followed = array_values($followed); // Reindexar para evitar índices rotos
-        $user->ended = array_values($ended);
-        $user->save();
-        CourseInteraction::where('course_id', $courseId)->decrement('follows_count');
+            CourseInteraction::where('course_id', $courseId)->increment('likes_count');
+        }
 
         return response()->json([
-            'message' => 'Curso eliminado de tu progreso.',
-            'followed' => $user->followed,
-            'ended' => $user->ended,
+            'message' => 'Curso marcado como favorito.',
+            'liked' => $user->liked,
         ], 200);
     } catch (Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
 
+public static function dislikeCourse(Request $request)
+{
+    try {
+        $user = $request->user();
+        $courseId = intval($request->input('id'));
 
+        // Obtener y decodificar el array actual
+        $liked = empty($user->liked) ? [] : json_decode($user->liked);
+
+        // Quitar el curso de 'liked' si existe
+        $liked = array_filter($liked, fn($id) => intval($id) !== $courseId);
+        $user->liked = array_values($liked); // Reindexar
+        $user->save();
+
+        CourseInteraction::where('course_id', $courseId)->decrement('likes_count');
+
+        return response()->json([
+            'message' => 'Curso quitado de favoritos.',
+            'liked' => $user->liked,
+        ], 200);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
 
 }

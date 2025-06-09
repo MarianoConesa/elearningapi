@@ -20,7 +20,6 @@ class Course extends Model
         'video_id',
         'catArr',
         'isPrivate',
-        'likes'
     ];
 
     protected $casts = [

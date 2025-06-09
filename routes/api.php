@@ -22,6 +22,8 @@ use Laravel\Socialite\Facades\Socialite;
             Route::post('followCourse', [UserController::class, 'followCourse']);
             Route::post('endCourse', [UserController::class, 'endCourse']);
             Route::post('unfollowCourse', [UserController::class, 'unfollowCourse']);
+            Route::post('likeCourse', [UserController::class, 'likeCourse']);
+            Route::post('dislikeCourse', [UserController::class, 'dislikeCourse']);
             Route::post('updateUser', [UserController::class, 'updateUser']);
             Route::post('updatePassword', [UserController::class, 'updatePassword']);
         });
@@ -34,6 +36,7 @@ use Laravel\Socialite\Facades\Socialite;
 
     Route::prefix('courses')->group(function () {
         Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');
+        Route::post('update/{id}', [CourseController::class, 'updateCourse'])->middleware('auth:sanctum');
         Route::get('getAll', [CourseController::class, 'getAllCourses']);
         Route::post('getById', [CourseController::class, 'getCourseById']);
         Route::get('getOwned', [CourseController::class, 'getOwnedCourses'])->middleware('auth:sanctum');
