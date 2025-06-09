@@ -16,18 +16,21 @@ class PasswordResetMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct($newPassword)
-    {
-        $this->newPassword = $newPassword;
-    }
+    public function __construct($newPassword, $user)
+{
+    $this->newPassword = $newPassword;
+    $this->user = $user;
+}
 
-    public function build()
+public function build()
 {
     return $this->subject('Tu nueva contraseña')
         ->view('emails.password_reset', [
-            'newPassword' => $this->newPassword
+            'newPassword' => $this->newPassword,
+            'user' => $this->user,
         ]);
 }
+
 
     /**
      * Get the attachments for the message.
