@@ -39,6 +39,8 @@ class UserController extends Controller
         $retObj->ended = json_decode($user->ended ?? '[]');
         $retObj->liked = json_decode($user->liked ?? '[]');
 
+        $user->isAdmin() && $retObj->isAdmin = true;
+
         return response()->json(['message' => $retObj]);
     } catch (Exception $e) {
         return response()->json([

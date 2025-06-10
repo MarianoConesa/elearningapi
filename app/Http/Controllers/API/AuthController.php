@@ -42,10 +42,6 @@ class AuthController extends Controller
         }
 
         $user->sendEmailVerificationNotification();
-        // Generar token
-        //$token = User::find($user->id)->createToken('api-token')->plainTextToken;
-
-        //return response()->json(['message' => 'Usuario registrado correctamente', 'token' => $token]);
 
         return response()->json([
             'message' => 'Registro exitoso. Revisa tu correo para verificar tu cuenta.'

@@ -11,23 +11,22 @@ class ImageController extends Controller
 {
     static public function getInitialImg(){
         try {
-            $logoObj = Image::getLogo();
+            // Obtenemos ambos logos
+            $logos = Image::getLogo();
 
-            if (!$logoObj) {
-                return response()->json(['error' => 'Logo not found'], 404);
+            if (empty($logos)) {
+                return response()->json(['error' => 'Logos not found'], 404);
             }
 
-            // Obtener el contenido del archivo
-            $imageContent = $logoObj;
-
-            // Detectar MIME type (asumiendo que es SVG, pero puedes usar `finfo` para más tipos)
-            $mimeType = 'image/svg+xml';
-
-            // Convertir a Base64
-            $base64Image = 'data:' . $mimeType . ';base64,' . base64_encode($imageContent);
+            // Convertir cada imagen a Base64
+            $base64Logos = [];
+            foreach ($logos as $key => $logoContent) {
+                $mimeType = 'image/svg+xml';
+                $base64Logos[$key] = 'data:' . $mimeType . ';base64,' . base64_encode($logoContent);
+            }
 
             return response()->json([
-                'message' => [$base64Image]
+                'message' => $base64Logos
             ]);
 
         } catch (Exception $e) {

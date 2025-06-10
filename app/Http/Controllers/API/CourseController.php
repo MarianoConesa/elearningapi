@@ -22,13 +22,13 @@ class CourseController extends Controller
         try {
             $courseObj = $request->all();
             $catIds = array_map('intval', $request->catArr);
-            $catArr = self::addParentCategories($catIds);
+            $catArr = self::addParentCategories($catIds); // si entra una categoria con padre, el padre tambien se añade
 
             $courseObj['user_id'] = Auth::id();
             $courseObj['catArr'] = json_encode($catArr);
             $courseObj['isPrivate'] = $request->isPrivate === true ? 1 : 0;
 
-            // Guardar imagen en storage y guardar la ruta
+
             if ($request->hasFile('miniature')) {
                 $imagePath = $request->file('miniature')->store('miniatures', 'public');
                 $image = Image::create(['file' => $imagePath, 'name' => 'courseImg']);
@@ -53,7 +53,7 @@ class CourseController extends Controller
                 }
             }
 
-            //Crea las interacciones en bbdd
+
             $newCourse->interaction()->create();
 
 
@@ -64,13 +64,13 @@ class CourseController extends Controller
         }
     }
 
-    static public function updateCourse(Request $request, $id)
+    public static function updateCourse(Request $request, $id)
 {
     try {
-        $course = Course::findOrFail($id);
+        $course = Course::with('videos')->findOrFail($id);
+        $user = Auth::user();
 
-        // Verificar que el usuario autenticado sea el propietario
-        if (Auth::id() !== $course->user_id) {
+        if ($user->id !== $course->user_id && !$user->isAdmin()) {
             return response()->json(['error' => 'No autorizado'], 403);
         }
 
@@ -83,7 +83,6 @@ class CourseController extends Controller
         $course->isPrivate = $request->isPrivate === true ? 1 : 0;
         $course->password = $request->password ?? null;
 
-        // Actualizar miniatura si se ha enviado una nueva
         if ($request->hasFile('miniature')) {
             $imagePath = $request->file('miniature')->store('miniatures', 'public');
             $image = Image::create(['file' => $imagePath, 'name' => 'courseImg']);
@@ -92,27 +91,23 @@ class CourseController extends Controller
 
         $course->save();
 
-        // Procesar oldVideos (actualizar índices y eliminar faltantes)
         $oldVideos = collect($request->input('old_videos', []))
             ->map(fn($v) => json_decode($v, true))
-            ->filter(fn($v) => isset($v['id'])); // asegúrate de que haya ID
+            ->filter(fn($v) => isset($v['id']));
 
         $oldVideoIds = $oldVideos->pluck('id')->toArray();
 
-        // Actualizar los títulos de los videos existentes
         foreach ($course->videos as $video) {
             if (in_array($video->id, $oldVideoIds)) {
                 $newData = $oldVideos->firstWhere('id', $video->id);
                 $video->title = $newData['title'];
                 $video->save();
             } else {
-                // Si el video no está en oldVideos, eliminarlo
                 Storage::disk('public')->delete($video->file);
                 $video->delete();
             }
         }
 
-        // Agregar nuevos videos si vienen
         if ($request->hasFile('video')) {
             $videos = $request->file('video');
             $indices = $request->input('indice', []);
@@ -121,7 +116,7 @@ class CourseController extends Controller
                 $videoPath = $file->store('videos', 'public');
                 $video = new Video([
                     'file' => $videoPath,
-                    'title' => isset($indices[$key]) ? $indices[$key] : null
+                    'title' => $indices[$key] ?? null
                 ]);
                 $video->course()->associate($course);
                 $video->save();
@@ -135,14 +130,36 @@ class CourseController extends Controller
 }
 
 
-    static public function getAllCourses()
+    public static function getAllCourses(Request $request)
     {
         try {
-            return response()->json(['message' => new CourseCollection(Course::all())]);
+            $usePagination = $request->has('page') || $request->has('per_page');
+
+            if ($usePagination) {
+                $perPage = (int) $request->input('per_page', 30);
+                $courses = Course::paginate($perPage);
+
+                return response()->json([
+                    'data' => new CourseCollection($courses->items()),
+                    'pagination' => [
+                        'current_page' => $courses->currentPage(),
+                        'last_page' => $courses->lastPage(),
+                        'per_page' => $courses->perPage(),
+                        'total' => $courses->total(),
+                        'has_more_pages' => $courses->hasMorePages(),
+                    ]
+                ]);
+            } else {
+                $courses = Course::all();
+                return response()->json([
+                    'data' => new CourseCollection($courses)
+                ]);
+            }
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
     public static function getCourseById(Request $request)
     {
@@ -153,77 +170,191 @@ class CourseController extends Controller
         }
     }
 
-    public static function getOwnedCourses(Request $request) {
+    public static function getOwnedCourses(Request $request)
+    {
         try {
             $userId = Auth::id();
-            $ownedCourses = Course::where('user_id', $userId)->get();
+            $usePagination = $request->has('page') || $request->has('per_page');
+            $courseQuery = Course::where('user_id', $userId);
 
-            return response()->json(['message' => new CourseCollection($ownedCourses)]);
+            if ($usePagination) {
+                $perPage = (int) $request->input('per_page', 10);
+                $courses = $courseQuery->paginate($perPage);
+
+                return response()->json([
+                    'data' => new CourseCollection($courses->items()),
+                    'pagination' => [
+                        'current_page' => $courses->currentPage(),
+                        'last_page' => $courses->lastPage(),
+                        'per_page' => $courses->perPage(),
+                        'total' => $courses->total(),
+                        'has_more_pages' => $courses->hasMorePages(),
+                    ]
+                ]);
+            } else {
+                $courses = $courseQuery->get();
+                return response()->json(['data' => new CourseCollection($courses)]);
+            }
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    public static function getCoursesByUserId($id)
+
+    public static function getCoursesByUserId($id, Request $request)
     {
-        try{
-            $courses = Course::where('user_id', $id)->get();
-            return response()->json(['message' => new CourseCollection($courses)]);
-        }catch (Exception $e){
+        try {
+            $usePagination = $request->has('page') || $request->has('per_page');
+            $courseQuery = Course::where('user_id', $id);
+
+            if ($usePagination) {
+                $perPage = (int) $request->input('per_page', 10);
+                $courses = $courseQuery->paginate($perPage);
+
+                return response()->json([
+                    'data' => new CourseCollection($courses->items()),
+                    'pagination' => [
+                        'current_page' => $courses->currentPage(),
+                        'last_page' => $courses->lastPage(),
+                        'per_page' => $courses->perPage(),
+                        'total' => $courses->total(),
+                        'has_more_pages' => $courses->hasMorePages(),
+                    ]
+                ]);
+            } else {
+                $courses = $courseQuery->get();
+                return response()->json(['data' => new CourseCollection($courses)]);
+            }
+        } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
-
     }
 
     public static function searchCourses(Request $request)
     {
         try {
-            $coursesByTitle = Course::where('title', 'like', '%' . $request[0] . '%');
+            $body = $request->all();
+            $query = $body[0] ?? '';
+            $pagination = $body[1] ?? [];
 
-            $userIds = User::where('username', 'like', '%' . $request[0] . '%')->pluck('id');
+            $coursesByTitle = Course::where('title', 'like', '%' . $query . '%')->get();
+            $userIds = User::where('username', 'like', '%' . $query . '%')->pluck('id');
+            $coursesByUser = Course::whereIn('user_id', $userIds)->get();
 
-            $coursesByUser = Course::whereIn('user_id', $userIds);
+            $merged = $coursesByTitle->merge($coursesByUser)->unique('id')->values();
 
-            $courses = $coursesByTitle->union($coursesByUser)->get()->unique('id');
+            $usePagination = isset($pagination['page']) || isset($pagination['per_page']);
 
-            return response()->json(['message' => new CourseCollection($courses)]);
+            if ($usePagination) {
+                $page = (int) ($pagination['page'] ?? 1);
+                $perPage = (int) ($pagination['per_page'] ?? 10);
+
+                $paginated = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+                return response()->json([
+                    'data' => new CourseCollection($paginated),
+                    'pagination' => [
+                        'current_page' => $page,
+                        'last_page' => ceil($merged->count() / $perPage),
+                        'per_page' => $perPage,
+                        'total' => $merged->count(),
+                        'has_more_pages' => $page * $perPage < $merged->count(),
+                    ]
+                ]);
+            } else {
+                return response()->json(['data' => new CourseCollection($merged)]);
+            }
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
+    public static function removeCourse($id)
+{
+    try {
+        $course = Course::with('videos')->findOrFail($id);
+        $user = Auth::user();
+
+        if ($user->id !== $course->user_id && !$user->isAdmin()) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        // Eliminar archivos y registros de videos
+        foreach ($course->videos as $video) {
+            Storage::disk('public')->delete($video->file);
+            $video->delete();
+        }
+
+        // Eliminar imagen si existe
+        if ($course->miniature) {
+            $image = Image::find($course->miniature);
+            if ($image) {
+                Storage::disk('public')->delete($image->file);
+                $image->delete();
+            }
+        }
+
+        // Eliminar interacciones relacionadas
+        $course->interaction()->delete();
+
+        // Eliminar el curso
+        $course->delete();
+
+        return response()->json(['message' => 'Curso eliminado con éxito']);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+
+
     public static function getFollowedCourses(Request $request)
     {
-        return self::getCoursesByUserField('followed');
+        return self::getCoursesByUserField('followed', $request);
     }
 
     public static function getLikedCourses(Request $request)
     {
-        return self::getCoursesByUserField('liked');
+        return self::getCoursesByUserField('liked', $request);
     }
 
     public static function getEndedCourses(Request $request)
     {
-        return self::getCoursesByUserField('ended');
+        return self::getCoursesByUserField('ended', $request);
     }
 
-    static private function getCoursesByUserField(string $field)
+    static private function getCoursesByUserField(string $field, Request $request)
     {
         try {
             $userId = Auth::id();
             $user = User::findOrFail($userId);
 
             $courseIds = json_decode($user->{$field}, true) ?? [];
+            $coursesQuery = Course::whereIn('id', $courseIds);
 
-            $courses = count($courseIds) > 0
-                ? Course::whereIn('id', $courseIds)->get()
-                : collect();
+            if ($request->has('page') || $request->has('per_page')) {
+                $perPage = (int) $request->input('per_page', 10);
+                $courses = $coursesQuery->paginate($perPage);
 
-            return response()->json(['message' => new CourseCollection($courses)]);
+                return response()->json([
+                    'data' => new CourseCollection($courses->items()),
+                    'pagination' => [
+                        'current_page' => $courses->currentPage(),
+                        'last_page' => $courses->lastPage(),
+                        'per_page' => $courses->perPage(),
+                        'total' => $courses->total(),
+                        'has_more_pages' => $courses->hasMorePages(),
+                    ]
+                ]);
+            } else {
+                $courses = $coursesQuery->get();
+                return response()->json(['message' => new CourseCollection($courses)]);
+            }
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
 
     static private function addParentCategories(array $catArr): array {
