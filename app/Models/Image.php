@@ -12,28 +12,35 @@ class Image extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'file','description'
+        'name', 'file', 'description'
     ];
 
     static public function getLogo()
     {
-        $logo = self::where('name', 'logo white')->first();
+        $logos = [];
 
-        if ($logo && Storage::disk('public')->exists($logo->file)) {
-            return Storage::disk('public')->get($logo->file);
+        // Logo White
+        $logoWhite = self::where('name', 'logo white')->first();
+        if ($logoWhite && Storage::disk('public')->exists($logoWhite->file)) {
+            $logos['white'] = Storage::disk('public')->get($logoWhite->file);
         }
 
-        return null;
+        // Logo Black
+        $logoBlack = self::where('name', 'logo black')->first();
+        if ($logoBlack && Storage::disk('public')->exists($logoBlack->file)) {
+            $logos['black'] = Storage::disk('public')->get($logoBlack->file);
+        }
+
+        return $logos;
     }
 
-public function course(): HasOne
-{
-    return $this->hasOne(Course::class);
-}
+    public function course(): HasOne
+    {
+        return $this->hasOne(Course::class);
+    }
 
-public function userProfile(): HasOne
-{
-    return $this->hasOne(User::class);
-}
-
+    public function userProfile(): HasOne
+    {
+        return $this->hasOne(User::class);
+    }
 }

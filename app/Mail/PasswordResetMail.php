@@ -24,7 +24,7 @@ class PasswordResetMail extends Mailable
 
 public function build()
 {
-    return $this->subject('Tu nueva contraseña')
+    return $this->subject('Tu nueva contraseña')->mailer('elearning')
         ->view('emails.password_reset', [
             'newPassword' => $this->newPassword,
             'user' => $this->user,

@@ -37,6 +37,7 @@ use Laravel\Socialite\Facades\Socialite;
     Route::prefix('courses')->group(function () {
         Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');
         Route::post('update/{id}', [CourseController::class, 'updateCourse'])->middleware('auth:sanctum');
+        Route::delete('remove/{id}', [CourseController::class, 'removeCourse'])->middleware('auth:sanctum');
         Route::get('getAll', [CourseController::class, 'getAllCourses']);
         Route::post('getById', [CourseController::class, 'getCourseById']);
         Route::get('getOwned', [CourseController::class, 'getOwnedCourses'])->middleware('auth:sanctum');
