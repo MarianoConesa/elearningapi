@@ -24,7 +24,8 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'admin',
             'email' => env('ADMIN_EMAIL'),
-            'password' => Hash::make(env('ADMIN_PASSWORD'))
+            'password' => Hash::make(env('ADMIN_PASSWORD')),
+            'email_verified_at' => now()
         ]);
 
         $this->call(CategorySeeder::class);
