@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
         Model::unguard();
         Schema::disableForeignKeyConstraints();
 
-        User::factory(10)->create();
 
         User::factory()->create([
             'name' => 'admin',

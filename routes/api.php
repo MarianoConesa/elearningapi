@@ -30,9 +30,9 @@ use Laravel\Socialite\Facades\Socialite;
     });
     Route::get('user/getUserInfo/{id}', [UserController::class, 'getForeignUserInfo']);
 
-    Route::prefix('images')->group(function () {
-        Route::get('initialImages', [ImageController::class, 'getInitialImg']);
-    });
+    // Route::prefix('images')->group(function () {
+    //     Route::get('initialImages', [ImageController::class, 'getInitialImg']);
+    // });
 
     Route::prefix('courses')->group(function () {
         Route::post('create', [CourseController::class, 'createCourse'])->middleware('auth:sanctum');

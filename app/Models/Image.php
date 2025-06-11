@@ -15,24 +15,24 @@ class Image extends Model
         'name', 'file', 'description'
     ];
 
-    static public function getLogo()
-    {
-        $logos = [];
+    // static public function getLogo()
+    // {
+    //     $logos = [];
 
-        // Logo White
-        $logoWhite = self::where('name', 'logo white')->first();
-        if ($logoWhite && Storage::disk('public')->exists($logoWhite->file)) {
-            $logos['white'] = Storage::disk('public')->get($logoWhite->file);
-        }
+    //     // Logo White
+    //     $logoWhite = self::where('name', 'logo white')->first();
+    //     if ($logoWhite && Storage::disk('public')->exists($logoWhite->file)) {
+    //         $logos['white'] = Storage::disk('public')->get($logoWhite->file);
+    //     }
 
-        // Logo Black
-        $logoBlack = self::where('name', 'logo black')->first();
-        if ($logoBlack && Storage::disk('public')->exists($logoBlack->file)) {
-            $logos['black'] = Storage::disk('public')->get($logoBlack->file);
-        }
+    //     // Logo Black
+    //     $logoBlack = self::where('name', 'logo black')->first();
+    //     if ($logoBlack && Storage::disk('public')->exists($logoBlack->file)) {
+    //         $logos['black'] = Storage::disk('public')->get($logoBlack->file);
+    //     }
 
-        return $logos;
-    }
+    //     return $logos;
+    // }
 
     public function course(): HasOne
     {
