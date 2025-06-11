@@ -27,23 +27,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make(env('ADMIN_PASSWORD'))
         ]);
 
-       foreach($this->images as $image){
-        Image::create($image);
-    }
-
         $this->call(CategorySeeder::class);
 
         Model::reguard();
         Schema::enableForeignKeyConstraints();
     }
-
-    private $images = [
-        ['name' => 'logo white',
-         'file' => 'assets/logos/logoIconWhite.svg']
-        ,['name' => 'logo Black',
-          'file' => 'assets/logos/logoIcon.svg']
-        ,['name' => 'logo Contrast',
-        'file' => 'assets/logos/logoIconContrast.svg']
-    ];
-
 }
